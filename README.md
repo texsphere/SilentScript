@@ -19,5 +19,17 @@ Designed especially for the **Deaf and Hard of Hearing (DHH)** community, NepSig
 NepSign aims to empower inclusive communication and promote the wider adoption of NSL across Nepal.
 
 ---
+## 🛠️ Tech Stack
+
+| Layer              | Technology                        |
+|-------------------|-----------------------------------|
+| Mobile Framework   | React Native (Expo Go)            |
+| Avatar             | Ready Player Me + Three.js        |
+| Speech Recognition | Google Cloud Speech-to-Text API   |
+| Audio Recording    | `expo-av`                         |
+| State Management   | React Hooks / Context API         |
+| UI Components      | React Native Paper / Custom       |
+
+---
 
 
