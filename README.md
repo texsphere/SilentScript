@@ -1,50 +1,35 @@
-# Welcome to your Expo app 👋
+# 🤟 NepSign – Nepali Sign Language Translator
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+NepSign is a mobile application that translates **spoken Nepali language into Nepali Sign Language (NSL)** using a **3D avatar**. It’s designed for the **Deaf and Hard of Hearing (DHH)** community in Nepal, empowering accessibility, inclusiveness, and communication through real-time voice-to-sign translation.
 
-## Get started
+> 💡 “Translating voice to gesture — breaking barriers, building bridges.”
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 📱 Features
 
-2. Start the app
+- 🎙️ **Nepali Speech Recognition** using Google Cloud Speech-to-Text API (`languageCode: 'ne-NP'`)
+- 🤖 **3D Sign Language Avatar** powered by Ready Player Me & Three.js
+- 🔁 **Real-Time Translation**: Continuous audio-to-sign conversion
+- 🌐 **WebView Integration**: Smooth avatar rendering inside React Native
+- ✋ **Gesture-based Activation**: Use a trigger gesture or tap to start translating
+- 🕒 **Translation History**: View and replay past translations
+- 🎨 **Simple & Intuitive UI** with multi-tab navigation
+- 🧪 **MVP built with React Native + Expo**
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🛠️ Tech Stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+| Layer              | Technology                        |
+|-------------------|-----------------------------------|
+| Mobile Framework   | React Native (Expo Go)            |
+| Avatar             | Ready Player Me + Three.js        |
+| Speech Recognition | Google Cloud Speech-to-Text API   |
+| Audio Recording    | `expo-av`                         |
+| State Management   | React Hooks / Context API         |
+| UI Components      | React Native Paper / Custom       |
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
 
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
