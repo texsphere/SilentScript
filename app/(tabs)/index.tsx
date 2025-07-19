@@ -1,17 +1,19 @@
 import { BlurView } from 'expo-blur';
-import { Video, AVPlaybackStatus } from 'expo-av';
+import { Video, AVPlaybackStatus, ResizeMode } from 'expo-av';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View, Platform, Text, ColorValue } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { Header } from '../../components/Header';
 import { LoadingDots } from '../../components/LoadingDots';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { VoiceRecorder } from '../../components/VoiceRecorder';
-import { useThemeColor } from '../../hooks/useThemeColor';
+import { useColorScheme } from '../../hooks/useColorScheme';
 import { LanguageManager } from '../../utils/LanguageManager';
 import { SettingsManager } from '../../utils/SettingsManager';
 import { transcribeAudio } from '../../utils/TranscriptionManager';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import pleaseGesture from '../../assets/gestures/please.mp4';
 import thankYouGesture from '../../assets/gestures/thank_you.mp4';
@@ -20,23 +22,50 @@ import iLikeYouGesture from '../../assets/gestures/i_like_you.mp4';
 import hospitalGesture from '../../assets/gestures/hospital.mp4';
 import kathmanduGesture from '../../assets/gestures/kathmandu.mp4';
 import namasteGesture from '../../assets/gestures/namaste.mp4';
+import whereGesture from '../../assets/gestures/where.mp4';
+import niceToMeetYouGesture from '../../assets/gestures/nice_to_meet_you.mp4';
+import idleGesture from '../../assets/gestures/idle.mp4';
+
+// Video state interface
+interface VideoState {
+  source: number | null;
+  loop: boolean;
+}
 
 export default function LiveTranslateScreen() {
+  const colorScheme = useColorScheme();
   const [isRecording, setIsRecording] = useState(false);
   const [transcription, setTranscription] = useState('');
-  // New state to reliably trigger the video effect
   const [triggeredTranscription, setTriggeredTranscription] = useState({ text: '', timestamp: 0 });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [gestureVideo, setGestureVideo] = useState<number | null>(null);
+  const [currentVideo, setCurrentVideo] = useState<VideoState>({ source: idleGesture, loop: true });
   const videoRef = useRef<Video>(null);
-  const backgroundColor = useThemeColor({ light: '#FFFFFF', dark: '#000000' }, 'background');
+  
+  const gradientColors = (colorScheme === 'dark' 
+    ? ['#111111', '#000000'] 
+    : ['#ffffff', '#e0e0e0']) as readonly [ColorValue, ColorValue, ...ColorValue[]];
+
+  const textAnim = useRef(new Animated.Value(0)).current;
+
   const [translations, setTranslations] = useState({
     title: 'Live Translate',
     transcribing: 'Transcribing',
     tapMicPrompt: 'Tap the microphone to start speaking in Nepali',
     noSpeechDetected: 'No speech was detected. Please try speaking again.'
   });
+
+  // Fade in animation for new transcription text
+  useEffect(() => {
+    if (transcription) {
+      textAnim.setValue(0);
+      Animated.timing(textAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [transcription, textAnim]);
 
   // Load translations
   useEffect(() => {
@@ -91,32 +120,48 @@ export default function LiveTranslateScreen() {
   }, [translations.noSpeechDetected]);
 
   useEffect(() => {
+    // Play idle animation on initial load
+    setCurrentVideo({ source: idleGesture, loop: true });
+  }, []);
+
+  useEffect(() => {
     const trimmedTranscription = triggeredTranscription.text.trim();
     if (!trimmedTranscription) return;
 
-    console.log(`Transcription received: "${trimmedTranscription}"`); // Debugging line
+    let gesture = null;
+    switch (trimmedTranscription) {
+      case 'कृपया':
+        gesture = pleaseGesture;
+        break;
+      case 'धन्यवाद':
+        gesture = thankYouGesture;
+        break;
+      case 'शुभ प्रभात':
+        gesture = goodMorningGesture;
+        break;
+      case 'मलाई तिमी मन पर्छ':
+        gesture = iLikeYouGesture;
+        break;
+      case 'अस्पताल':
+        gesture = hospitalGesture;
+        break;
+      case 'काठमाडौँ':
+        gesture = kathmanduGesture;
+        break;
+      case 'नमस्ते':
+        gesture = namasteGesture;
+        break;
+      case 'कहाँ':
+        gesture = whereGesture;
+        break;
+      case 'भेटेर खुशी लाग्यो':
+        gesture = niceToMeetYouGesture;
+        break;
+    }
 
-    if (trimmedTranscription === 'कृपया') {
-      console.log('Playing "कृपया" video.');
-      setGestureVideo(pleaseGesture);
-    } else if (trimmedTranscription === 'धन्यवाद') {
-      console.log('Playing "धन्यवाद" video.');
-      setGestureVideo(thankYouGesture);
-    } else if (trimmedTranscription === 'शुभ प्रभात') {
-      console.log('Playing "शुभ प्रभात" video.');
-      setGestureVideo(goodMorningGesture);
-    } else if (trimmedTranscription === 'मलाई तिमी मन पर्छ') {
-      console.log('Playing "मलाई तिमी मन पर्छ" video.');
-      setGestureVideo(iLikeYouGesture);
-    } else if (trimmedTranscription === 'अस्पताल') {
-      console.log('Playing "अस्पताल" video.');
-      setGestureVideo(hospitalGesture);
-    } else if (trimmedTranscription === 'काठमाडौँ') {
-      console.log('Playing "काठमाडौँ" video.');
-      setGestureVideo(kathmanduGesture);
-    } else if (trimmedTranscription === 'नमस्ते') {
-      console.log('Playing "नमस्ते" video.');
-      setGestureVideo(namasteGesture);
+    if (gesture) {
+      console.log(`Playing "${trimmedTranscription}" video.`);
+      setCurrentVideo({ source: gesture, loop: false });
     }
   }, [triggeredTranscription]);
 
@@ -129,72 +174,65 @@ export default function LiveTranslateScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <LinearGradient colors={gradientColors} style={StyleSheet.absoluteFill} />
       <Header title={translations.title} />
-      
-      {/* Avatar Display */}
-      <View style={styles.avatarContainer}>
-        {gestureVideo && (
-          <View style={[styles.gestureContainer, { transform: [{ scale: 2 }] }]}>
-            <Video
-              ref={videoRef}
-              source={gestureVideo}
-              style={styles.video}
-              resizeMode="contain"
-              shouldPlay
-              isLooping={false}
-              rate={2.0}
-              onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
-                if (status.isLoaded && status.didJustFinish) {
-                  setGestureVideo(null);
-                }
-              }}
-            />
-          </View>
-        )}
-      </View>
+      <View style={styles.contentContainer}>
+        <View style={styles.videoContainer}>
+          {currentVideo.source && (
+            <View style={styles.gestureContainer}>
+              <Video
+                ref={videoRef}
+                source={currentVideo.source}
+                style={[styles.video, { transform: [{ scale: 2 }] }]}
+                resizeMode={ResizeMode.COVER}
+                shouldPlay
+                isLooping={currentVideo.loop}
+                isMuted={true}
+                rate={1.0}
+                onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
+                  if (status.isLoaded && status.didJustFinish && !currentVideo.loop) {
+                    setCurrentVideo({ source: idleGesture, loop: true });
+                  }
+                }}
+              />
+            </View>
+          )}
+        </View>
 
-      {/* Transcription Display */}
-      <View style={styles.transcriptionContainer}>
-        <BlurView intensity={80} style={StyleSheet.absoluteFill} />
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ThemedText>{translations.transcribing}</ThemedText>
-            <LoadingDots />
+        <View style={styles.bottomContainer}>
+          <View style={styles.transcriptionContainer}>
+            <BlurView intensity={80} style={StyleSheet.absoluteFill} />
+            {isLoading ? (
+              <View style={styles.centerContent}>
+                <ThemedText style={styles.transcriptionText}>{translations.transcribing}</ThemedText>
+                <LoadingDots />
+              </View>
+            ) : error ? (
+              <ErrorMessage message={error} onDismiss={() => setError(null)} type={'error'} />
+            ) : transcription ? (
+              <Animated.View style={{ opacity: textAnim }}>
+                <Text style={styles.transcriptionText}>{transcription}</Text>
+              </Animated.View>
+            ) : (
+              <View style={styles.centerContent}>
+                <ThemedText style={styles.placeholderText}>
+                  {translations.tapMicPrompt}
+                </ThemedText>
+              </View>
+            )}
           </View>
-        ) : error ? (
-          <ErrorMessage 
-            message={error}
-            onDismiss={() => setError(null)}
-            type={error.includes('कृपया') ? 'warning' : 'error'}
+          <VoiceRecorder
+            isRecording={isRecording}
+            onRecordingStart={() => {
+              setIsRecording(true);
+              setError(null);
+              setTranscription('');
+              setCurrentVideo({ source: null, loop: false });
+            }}
+            onRecordingStop={handleTranscriptionComplete}
+            onError={handleRecordingError}
           />
-        ) : transcription ? (
-          <View style={styles.transcriptionContent}>
-            <ThemedText style={styles.transcriptionText}>{transcription}</ThemedText>
-          </View>
-        ) : (
-          <View style={styles.placeholderContainer}>
-            <ThemedText style={styles.placeholderText}>
-              नेपाली भाषामा बोल्न माइक्रोफोन थिच्नुहोस्
-            </ThemedText>
-            <ThemedText style={[styles.placeholderText, styles.placeholderTranslation]}>
-              ({translations.tapMicPrompt})
-            </ThemedText>
-          </View>
-        )}
-      </View>
-
-      {/* Voice Input */}
-      <View style={styles.controlsContainer}>
-        <VoiceRecorder
-          isRecording={isRecording}
-          onRecordingStart={() => {
-            setIsRecording(true);
-            setError(null);
-            setGestureVideo(null);
-          }}
-          onRecordingStop={handleTranscriptionComplete}
-          onError={handleRecordingError}
-        />
+        </View>
       </View>
     </ThemedView>
   );
@@ -204,68 +242,55 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  avatarContainer: {
+  flex: {
     flex: 1,
-    width: '100%',
-    backgroundColor: 'transparent',
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingTop: 80, // Adjust this value to position content below the header
+  },
+  videoContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   gestureContainer: {
-    width: '90%',
+    width: '80%',
     aspectRatio: 3 / 4,
-  },
-  gestureImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   video: {
     width: '100%',
     height: '100%',
   },
+  bottomContainer: {
+    padding: 24,
+    gap: 24,
+  },
   transcriptionContainer: {
-    width: '90%',
-    minHeight: 100,
-    marginVertical: 20,
-    borderRadius: 15,
+    minHeight: 120,
+    borderRadius: 20,
     overflow: 'hidden',
-    alignSelf: 'center',
-  },
-  transcriptionContent: {
-    padding: 16,
-    alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
   },
-  transcriptionText: {
-    fontSize: 18,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    padding: 16,
-    flexDirection: 'row',
+  centerContent: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  placeholderContainer: {
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  transcriptionText: {
+    fontSize: 28,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   placeholderText: {
+    fontSize: 18,
+    opacity: 0.7,
     textAlign: 'center',
-    opacity: 0.8,
-    fontSize: 16,
-  },
-  placeholderTranslation: {
-    fontSize: 14,
-    marginTop: 4,
-    opacity: 0.6,
-  },
-  controlsContainer: {
-    paddingBottom: 20,
-    alignItems: 'center',
   },
 });
 

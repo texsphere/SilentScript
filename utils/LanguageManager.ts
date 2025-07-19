@@ -209,11 +209,15 @@ const translations: Translations = {
   },
   feature4: {
     en: 'Offline mode for basic translations',
-    ne: 'आधारभूत अनुवादका लागि अफलाइन मोड',
+    ne: 'अफलाइन मोड आधारभूत अनुवादहरूको लागि'
+  },
+  lessonsTitle: {
+    en: 'Lessons',
+    ne: 'पाठहरू'
   },
   creditsTitle: {
     en: 'Credits',
-    ne: 'श्रेय',
+    ne: 'क्रेडिट'
   },
   creditsContent: {
     en: 'NepSign uses Ready Player Me for the 3D avatar system and Google Cloud Speech-to-Text API for voice recognition. Special thanks to our Nepali Sign Language experts for their guidance and support.',

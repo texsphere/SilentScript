@@ -6,10 +6,15 @@
 import Colors from '../constants/Colors';
 import { useColorScheme } from './useColorScheme';
 
-type ColorKeys = Exclude<keyof typeof Colors.light, 'gray'>;
+type ColorProps = {
+  light?: string | string[];
+  dark?: string | string[];
+};
+
+type ColorKeys = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export function useThemeColor(
-  props: { light?: string; dark?: string },
+  props: ColorProps,
   colorName: ColorKeys
 ) {
   const theme = useColorScheme() ?? 'light';

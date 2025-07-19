@@ -17,7 +17,7 @@ export default function TabLayout() {
     translate: 'Translate',
     history: 'History',
     settings: 'Settings',
-    help: 'Help'
+    lessons: 'Lessons'
   });
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function TabLayout() {
       translate: LanguageManager.t('translateTitle'),
       history: LanguageManager.t('historyTitle'),
       settings: LanguageManager.t('settingsTitle'),
-      help: LanguageManager.t('helpTitle')
+      lessons: LanguageManager.t('lessonsTitle')
     });
   };
 
@@ -92,28 +92,28 @@ export default function TabLayout() {
         name="index"
         options={{
           title: translations.translate,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="ear.fill" color={color} />,
+          tabBarIcon: ({ color }: { color: string }) => <IconSymbol size={28} name="ear.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: translations.history,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} />,
+          tabBarIcon: ({ color }: { color: string }) => <IconSymbol size={28} name="clock.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: translations.settings,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gear" color={color} />,
+          tabBarIcon: ({ color }: { color: string }) => <IconSymbol size={28} name="gear" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="help"
+        name="lessons"
         options={{
-          title: translations.help,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="questionmark.circle.fill" color={color} />,
+          title: translations.lessons,
+          tabBarIcon: ({ color }: { color: string }) => <IconSymbol size={28} name="book.fill" color={color} />,
         }}
       />
     </Tabs>

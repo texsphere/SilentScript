@@ -10,9 +10,11 @@ import { IconSymbol } from './ui/IconSymbol';
 
 interface HeaderProps {
   title?: string;
+  rightIcon?: string;
+  onRightPress?: () => void;
 }
 
-export function Header({ title = 'NepSign' }: HeaderProps) {
+export function Header({ title = 'NepSign', rightIcon, onRightPress }: HeaderProps) {
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? 'light';
   const [showHelp, setShowHelp] = useState(false);
@@ -49,10 +51,10 @@ export function Header({ title = 'NepSign' }: HeaderProps) {
         <ThemedText style={styles.title}>{title}</ThemedText>
         <TouchableOpacity
           style={styles.helpButton}
-          onPress={() => setShowHelp(!showHelp)}
+          onPress={rightIcon ? onRightPress : () => setShowHelp(!showHelp)}
         >
           <IconSymbol
-            name="questionmark.circle.fill"
+            name={rightIcon || "questionmark.circle.fill"}
             size={24}
             color={Colors[theme].text}
           />
