@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur';
+import { Video, AVPlaybackStatus } from 'expo-av';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { AvatarWebView } from '../../components/AvatarWebView';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { Header } from '../../components/Header';
 import { LoadingDots } from '../../components/LoadingDots';
@@ -13,12 +13,23 @@ import { LanguageManager } from '../../utils/LanguageManager';
 import { SettingsManager } from '../../utils/SettingsManager';
 import { transcribeAudio } from '../../utils/TranscriptionManager';
 
+import pleaseGesture from '../../assets/gestures/please.mp4';
+import thankYouGesture from '../../assets/gestures/thank_you.mp4';
+import goodMorningGesture from '../../assets/gestures/good_morning.mp4';
+import iLikeYouGesture from '../../assets/gestures/i_like_you.mp4';
+import hospitalGesture from '../../assets/gestures/hospital.mp4';
+import kathmanduGesture from '../../assets/gestures/kathmandu.mp4';
+import namasteGesture from '../../assets/gestures/namaste.mp4';
+
 export default function LiveTranslateScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcription, setTranscription] = useState('');
+  // New state to reliably trigger the video effect
+  const [triggeredTranscription, setTriggeredTranscription] = useState({ text: '', timestamp: 0 });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const avatarRef = useRef(null);
+  const [gestureVideo, setGestureVideo] = useState<number | null>(null);
+  const videoRef = useRef<Video>(null);
   const backgroundColor = useThemeColor({ light: '#FFFFFF', dark: '#000000' }, 'background');
   const [translations, setTranslations] = useState({
     title: 'Live Translate',
@@ -67,6 +78,7 @@ export default function LiveTranslateScreen() {
       }
       
       setTranscription(nepaliText);
+      setTriggeredTranscription({ text: nepaliText, timestamp: Date.now() });
       
     } catch (err) {
       console.error('Transcription error:', err);
@@ -77,6 +89,36 @@ export default function LiveTranslateScreen() {
       setIsRecording(false);
     }
   }, [translations.noSpeechDetected]);
+
+  useEffect(() => {
+    const trimmedTranscription = triggeredTranscription.text.trim();
+    if (!trimmedTranscription) return;
+
+    console.log(`Transcription received: "${trimmedTranscription}"`); // Debugging line
+
+    if (trimmedTranscription === 'कृपया') {
+      console.log('Playing "कृपया" video.');
+      setGestureVideo(pleaseGesture);
+    } else if (trimmedTranscription === 'धन्यवाद') {
+      console.log('Playing "धन्यवाद" video.');
+      setGestureVideo(thankYouGesture);
+    } else if (trimmedTranscription === 'शुभ प्रभात') {
+      console.log('Playing "शुभ प्रभात" video.');
+      setGestureVideo(goodMorningGesture);
+    } else if (trimmedTranscription === 'मलाई तिमी मन पर्छ') {
+      console.log('Playing "मलाई तिमी मन पर्छ" video.');
+      setGestureVideo(iLikeYouGesture);
+    } else if (trimmedTranscription === 'अस्पताल') {
+      console.log('Playing "अस्पताल" video.');
+      setGestureVideo(hospitalGesture);
+    } else if (trimmedTranscription === 'काठमाडौँ') {
+      console.log('Playing "काठमाडौँ" video.');
+      setGestureVideo(kathmanduGesture);
+    } else if (trimmedTranscription === 'नमस्ते') {
+      console.log('Playing "नमस्ते" video.');
+      setGestureVideo(namasteGesture);
+    }
+  }, [triggeredTranscription]);
 
   const handleRecordingError = useCallback((err: string) => {
     setError(err);
@@ -91,9 +133,24 @@ export default function LiveTranslateScreen() {
       
       {/* Avatar Display */}
       <View style={styles.avatarContainer}>
-        <AvatarWebView
-          ref={avatarRef}
-        />
+        {gestureVideo && (
+          <View style={[styles.gestureContainer, { transform: [{ scale: 2 }] }]}>
+            <Video
+              ref={videoRef}
+              source={gestureVideo}
+              style={styles.video}
+              resizeMode="contain"
+              shouldPlay
+              isLooping={false}
+              rate={2.0}
+              onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
+                if (status.isLoaded && status.didJustFinish) {
+                  setGestureVideo(null);
+                }
+              }}
+            />
+          </View>
+        )}
       </View>
 
       {/* Transcription Display */}
@@ -133,6 +190,7 @@ export default function LiveTranslateScreen() {
           onRecordingStart={() => {
             setIsRecording(true);
             setError(null);
+            setGestureVideo(null);
           }}
           onRecordingStop={handleTranscriptionComplete}
           onError={handleRecordingError}
@@ -150,6 +208,21 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gestureContainer: {
+    width: '90%',
+    aspectRatio: 3 / 4,
+  },
+  gestureImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
   },
   transcriptionContainer: {
     width: '90%',
