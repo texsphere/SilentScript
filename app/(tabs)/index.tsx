@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur';
 import { Video, AVPlaybackStatus, ResizeMode } from 'expo-av';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, View, Platform, Text, ColorValue } from 'react-native';
+import { Animated, StyleSheet, View, Platform, Text, ColorValue, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { Header } from '../../components/Header';
@@ -14,6 +14,8 @@ import { LanguageManager } from '../../utils/LanguageManager';
 import { SettingsManager } from '../../utils/SettingsManager';
 import { transcribeAudio } from '../../utils/TranscriptionManager';
 import { LinearGradient } from 'expo-linear-gradient';
+import { WebView } from 'react-native-webview';
+import { useCameraPermissions } from 'expo-camera';
 
 import pleaseGesture from '../../assets/gestures/please.mp4';
 import thankYouGesture from '../../assets/gestures/thank_you.mp4';
@@ -25,6 +27,9 @@ import namasteGesture from '../../assets/gestures/namaste.mp4';
 import whereGesture from '../../assets/gestures/where.mp4';
 import niceToMeetYouGesture from '../../assets/gestures/nice_to_meet_you.mp4';
 import idleGesture from '../../assets/gestures/idle.mp4';
+import tapaikoNamKHoGesture from '../../assets/gestures/tapaiko-nam-k-ho.mp4';
+import whereAreYouFromGesture from '../../assets/gestures/where_are_you_from.mp4';
+import tapaikoUmerKatiGesture from '../../assets/gestures/tapaiko-umer-kati.mp4';
 
 // Video state interface
 interface VideoState {
@@ -41,7 +46,9 @@ export default function LiveTranslateScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentVideo, setCurrentVideo] = useState<VideoState>({ source: idleGesture, loop: true });
   const videoRef = useRef<Video>(null);
-  
+  const [translationMode, setTranslationMode] = useState<'speech-to-sign' | 'sign-to-speech'>('speech-to-sign');
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+
   const gradientColors = (colorScheme === 'dark' 
     ? ['#111111', '#000000'] 
     : ['#ffffff', '#e0e0e0']) as readonly [ColorValue, ColorValue, ...ColorValue[]];
@@ -157,6 +164,15 @@ export default function LiveTranslateScreen() {
       case 'भेटेर खुशी लाग्यो':
         gesture = niceToMeetYouGesture;
         break;
+      case 'तपाईं को नाम के हो':
+        gesture = tapaikoNamKHoGesture;
+        break;
+      case 'तपाईं कहाँबाट':
+        gesture = whereAreYouFromGesture;
+        break;
+      case 'तपाईं को उमेर कति':
+        gesture = tapaikoUmerKatiGesture;
+        break;
     }
 
     if (gesture) {
@@ -172,68 +188,115 @@ export default function LiveTranslateScreen() {
     setTranscription('');
   }, []);
 
+  const toggleTranslationMode = () => {
+    setTranslationMode(prevMode => prevMode === 'speech-to-sign' ? 'sign-to-speech' : 'speech-to-sign');
+  };
+
+  const renderSignToSpeechMode = () => {
+    if (!cameraPermission) {
+      // Permissions are still loading
+      return <View />;
+    }
+
+    if (!cameraPermission.granted) {
+      // Permissions are not granted
+      return (
+        <View style={styles.centerContent}>
+          <ThemedText style={{ textAlign: 'center', marginBottom: 16 }}>
+            We need your permission to show the camera
+          </ThemedText>
+          <Button onPress={requestCameraPermission} title="Grant Permission" />
+        </View>
+      );
+    }
+
+    // Permissions are granted
+    return (
+      <WebView 
+        source={{ uri: 'http://192.168.50.178:5173/' }} 
+        style={{ flex: 1 }}
+        allowsInlineMediaPlayback
+        mediaPlaybackRequiresUserAction={false}
+        javaScriptEnabled={true}
+        mediaCapturePermissionGrantType={'grant'}
+        allowFileAccessFromFileURLs
+        allowUniversalAccessFromFileURLs
+      />
+    );
+  };
+
   return (
     <ThemedView style={styles.container}>
       <LinearGradient colors={gradientColors} style={StyleSheet.absoluteFill} />
-      <Header title={translations.title} />
-      <View style={styles.contentContainer}>
-        <View style={styles.videoContainer}>
-          {currentVideo.source && (
-            <View style={styles.gestureContainer}>
-              <Video
-                ref={videoRef}
-                source={currentVideo.source}
-                style={[styles.video, { transform: [{ scale: 2 }] }]}
-                resizeMode={ResizeMode.COVER}
-                shouldPlay
-                isLooping={currentVideo.loop}
-                isMuted={true}
-                rate={1.0}
-                onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
-                  if (status.isLoaded && status.didJustFinish && !currentVideo.loop) {
-                    setCurrentVideo({ source: idleGesture, loop: true });
-                  }
+      <Header 
+        title={translations.title} 
+        rightIcon={translationMode === 'speech-to-sign' ? 'hand.raised.fill' : 'speaker.wave.2.fill'}
+        onRightPress={toggleTranslationMode}
+      />
+      {translationMode === 'speech-to-sign' ? (
+        <View style={styles.contentContainer}>
+          <>
+            <View style={styles.videoContainer}>
+              {currentVideo.source && (
+                <View style={styles.gestureContainer}>
+                  <Video
+                    ref={videoRef}
+                    source={currentVideo.source}
+                    style={[styles.video, { transform: [{ scale: 2 }] }]}
+                    resizeMode={ResizeMode.COVER}
+                    shouldPlay
+                    isLooping={currentVideo.loop}
+                    isMuted={true}
+                    rate={1.0}
+                    onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
+                      if (status.isLoaded && status.didJustFinish && !currentVideo.loop) {
+                        setCurrentVideo({ source: idleGesture, loop: true });
+                      }
+                    }}
+                  />
+                </View>
+              )}
+            </View>
+
+            <View style={styles.bottomContainer}>
+              <View style={styles.transcriptionContainer}>
+                <BlurView intensity={80} style={StyleSheet.absoluteFill} />
+                {isLoading ? (
+                  <View style={styles.centerContent}>
+                    <ThemedText style={styles.transcriptionText}>{translations.transcribing}</ThemedText>
+                    <LoadingDots />
+                  </View>
+                ) : error ? (
+                  <ErrorMessage message={error} onDismiss={() => setError(null)} type={'error'} />
+                ) : transcription ? (
+                  <Animated.View style={{ opacity: textAnim }}>
+                    <Text style={styles.transcriptionText}>{transcription}</Text>
+                  </Animated.View>
+                ) : (
+                  <View style={styles.centerContent}>
+                    <ThemedText style={styles.placeholderText}>
+                      {translations.tapMicPrompt}
+                    </ThemedText>
+                  </View>
+                )}
+              </View>
+              <VoiceRecorder
+                isRecording={isRecording}
+                onRecordingStart={() => {
+                  setIsRecording(true);
+                  setError(null);
+                  setTranscription('');
+                  setCurrentVideo({ source: null, loop: false });
                 }}
+                onRecordingStop={handleTranscriptionComplete}
+                onError={handleRecordingError}
               />
             </View>
-          )}
+          </>
         </View>
-
-        <View style={styles.bottomContainer}>
-          <View style={styles.transcriptionContainer}>
-            <BlurView intensity={80} style={StyleSheet.absoluteFill} />
-            {isLoading ? (
-              <View style={styles.centerContent}>
-                <ThemedText style={styles.transcriptionText}>{translations.transcribing}</ThemedText>
-                <LoadingDots />
-              </View>
-            ) : error ? (
-              <ErrorMessage message={error} onDismiss={() => setError(null)} type={'error'} />
-            ) : transcription ? (
-              <Animated.View style={{ opacity: textAnim }}>
-                <Text style={styles.transcriptionText}>{transcription}</Text>
-              </Animated.View>
-            ) : (
-              <View style={styles.centerContent}>
-                <ThemedText style={styles.placeholderText}>
-                  {translations.tapMicPrompt}
-                </ThemedText>
-              </View>
-            )}
-          </View>
-          <VoiceRecorder
-            isRecording={isRecording}
-            onRecordingStart={() => {
-              setIsRecording(true);
-              setError(null);
-              setTranscription('');
-              setCurrentVideo({ source: null, loop: false });
-            }}
-            onRecordingStop={handleTranscriptionComplete}
-            onError={handleRecordingError}
-          />
-        </View>
-      </View>
+      ) : (
+        renderSignToSpeechMode()
+      )}
     </ThemedView>
   );
 }

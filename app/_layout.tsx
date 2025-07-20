@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from '../hooks/useColorScheme';
+import { Camera } from 'expo-camera';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -11,6 +12,13 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  useEffect(() => {
+    (async () => {
+      await Camera.requestCameraPermissionsAsync();
+      await Camera.requestMicrophonePermissionsAsync();
+    })();
+  }, []);
 
   useEffect(() => {
     if (error) throw error;

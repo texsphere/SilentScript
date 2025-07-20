@@ -40,6 +40,8 @@ const MAPPING: IconMapping = {
   'exclamationmark.triangle.fill': 'warning',
   'arrow.counterclockwise': 'replay',
   'close': 'close',
+  'speaker.wave.2.fill': 'volume-up',
+  'mic.fill': 'mic',
 };
 
 /**
